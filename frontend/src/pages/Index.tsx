@@ -37,26 +37,47 @@ const Index = () => {
 
 	const isInitialState = messages.length === 0;
 
-	const handleSendMessage = (content: string) => {
-		const userMessage: ChatMessage = {
-			id: Date.now().toString(),
-			role: "user",
-			content,
-		};
+    const handleSendMessage = async (content: string) => {
+        const userMessage: ChatMessage = {
+            id: Date.now().toString(),
+            role: "user",
+            content,
+        };
+        setMessages((prev) => [...prev, userMessage]);
 
-		setMessages((prev) => [...prev, userMessage]);
+        try {
+            const response = await fetch("http://localhost:8000/api/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    message: content,
+                    model: activeModelId,
+                }),
+            });
 
-		setTimeout(() => {
-			const randomResponse =
-				MOCK_RESPONSES[Math.floor(Math.random() * MOCK_RESPONSES.length)];
-			const aiMessage: ChatMessage = {
-				id: (Date.now() + 1).toString(),
-				role: "assistant",
-				content: randomResponse,
-			};
-			setMessages((prev) => [...prev, aiMessage]);
-		}, 800);
-	};
+            if (!response.ok) throw new Error("Erro na API");
+
+            const data = await response.json();
+
+            const aiMessage: ChatMessage = {
+                id: (Date.now() + 1).toString(),
+                role: "assistant",
+                content: data.response,
+            };
+            setMessages((prev) => [...prev, aiMessage]);
+
+        } catch (error) {
+            console.error("Erro ao conectar com o backend:", error);
+            const errorMessage: ChatMessage = {
+                id: (Date.now() + 1).toString(),
+                role: "assistant",
+                content: "Desculpe, não consegui conectar ao servidor. Verifique se o Backend está rodando.",
+            };
+            setMessages((prev) => [...prev, errorMessage]);
+        }
+    };
 
 	return (
 		<div className="flex h-screen w-full overflow-hidden">
