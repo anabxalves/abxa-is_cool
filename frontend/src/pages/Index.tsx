@@ -22,14 +22,6 @@ const MODELS: Model[] = [
 	{ id: "llama", name: "Llama 3.2" },
 ];
 
-const MOCK_RESPONSES = [
-	"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-	"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-	"Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
-	"Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-	"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.",
-];
-
 const Index = () => {
 	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 	const [activeModelId, setActiveModelId] = useState(MODELS[0].id);
@@ -46,7 +38,7 @@ const Index = () => {
         setMessages((prev) => [...prev, userMessage]);
 
         try {
-            const response = await fetch("http://localhost:8000/api/chat", {
+            const response = await fetch("/api/chat", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

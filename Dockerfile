@@ -1,4 +1,4 @@
-FROM node:18-alpine as build-frontend
+FROM node:18-alpine AS build-frontend
 
 WORKDIR /app-frontend
 
@@ -24,8 +24,8 @@ COPY app/ ./app
 
 COPY --from=build-frontend /app-frontend/dist ./app/static
 
-RUN useradd -m myuser
-USER myuser
+# RUN useradd -m myuser
+# USER myuser
 
 EXPOSE 80
 
