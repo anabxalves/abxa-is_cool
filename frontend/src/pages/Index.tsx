@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/IsCoolGPT/Sidebar";
 import { TopBar } from "@/components/IsCoolGPT/TopBar";
 import { ChatArea } from "@/components/IsCoolGPT/ChatArea";
 import { InputBox } from "@/components/IsCoolGPT/InputBox";
+import { Menu } from "lucide-react";
 
 interface ChatMessage {
 	id: string;
@@ -17,17 +18,34 @@ interface Model {
 
 const MODELS: Model[] = [
 	{ id: "gemini", name: "Gemini 2.5 (Flash)" },
-    { id: "openai", name: "GPT (OSS 20b)" },
-	{ id: "llama", name: "Llama 3.3 (70b Versatile)" },
+    { id: "openai", name: "OpenAI GPT OSS" },
+	{ id: "llama", name: "Llama 3.3" },
     { id: "moonshot", name: "Moonshot (Kimi K2)" },
 ];
 
 const Index = () => {
-	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-	const [activeModelId, setActiveModelId] = useState(MODELS[0].id);
-	const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+    const [hasInteractedWithMenu, setHasInteractedWithMenu] = useState(false);
+    const [isMobile, setIsMobile] = useState(() => window.innerWidth < 1024);
+    const [activeModelId, setActiveModelId] = useState(MODELS[0].id);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
 
-	const isInitialState = messages.length === 0;
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    const isInitialState = messages.length === 0;
+
+    const handleMenuClick = () => {
+        setIsMobileSidebarOpen(true);
+        setHasInteractedWithMenu(true);
+    };
 
     const handleSendMessage = async (content: string) => {
         const userMessage: ChatMessage = {
@@ -76,31 +94,37 @@ const Index = () => {
         }
     };
 
-	return (
-		<div className="flex h-screen w-full overflow-hidden">
-			<Sidebar
-				isCollapsed={isSidebarCollapsed}
-				onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-			/>
+    return (
+        <div className="flex h-screen w-full overflow-hidden bg-background relative">
+            <Sidebar
+                isCollapsed={isSidebarCollapsed}
+                isMobile={isMobile}
+                isOpen={isMobileSidebarOpen}
+                onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                onCloseMobile={() => setIsMobileSidebarOpen(false)}
+            />
 
-			<div className="flex flex-col flex-1 w-full">
-				<TopBar
-					models={MODELS}
-					activeModelId={activeModelId}
-					onModelSelect={setActiveModelId}
-				/>
+            <div className="flex flex-col flex-1 w-full relative h-full">
+                <TopBar
+                    models={MODELS}
+                    activeModelId={activeModelId}
+                    onModelSelect={setActiveModelId}
+                    isMobile={isMobile}
+                    onMenuClick={handleMenuClick}
+                    showMenuHighlight={!hasInteractedWithMenu && isInitialState}
+                />
 
-				<ChatArea messages={messages} isInitialState={isInitialState} />
+                <ChatArea messages={messages} isInitialState={isInitialState} />
 
-				<div className={isInitialState ? "pb-12" : ""}>
-					<InputBox
-						onSendMessage={handleSendMessage}
-						isInitialState={isInitialState}
-					/>
-				</div>
-			</div>
-		</div>
-	);
+                <div className="pb-12 p-4">
+                    <InputBox
+                        onSendMessage={handleSendMessage}
+                        isInitialState={isInitialState}
+                    />
+                </div>
+            </div>
+        </div>
+    );
 };
 
 export default Index;
