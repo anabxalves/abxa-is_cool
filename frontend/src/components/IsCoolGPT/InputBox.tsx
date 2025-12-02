@@ -1,5 +1,5 @@
 import { useState, FormEvent, KeyboardEvent } from "react";
-import { Paperclip, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface InputBoxProps {
@@ -39,14 +39,6 @@ export const InputBox = ({ onSendMessage, isInitialState }: InputBoxProps) => {
 		>
 			<form onSubmit={handleSubmit} className="input-elegant">
 				<div className="flex items-end gap-3 p-4">
-					<button
-						type="button"
-						className="flex-shrink-0 w-10 h-10 rounded-xl bg-muted hover:bg-muted/70 flex items-center justify-center transition-colors"
-						aria-label="Anexar arquivo"
-					>
-						<Paperclip className="w-5 h-5 text-muted-foreground" />
-					</button>
-
 					<textarea
 						value={message}
 						onChange={(e) => setMessage(e.target.value)}
