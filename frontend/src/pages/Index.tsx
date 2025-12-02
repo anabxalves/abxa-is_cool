@@ -35,7 +35,9 @@ const Index = () => {
             role: "user",
             content,
         };
-        setMessages((prev) => [...prev, userMessage]);
+
+        const updatedMessages = [...messages, userMessage];
+        setMessages(updatedMessages);
 
         try {
             const response = await fetch("/api/chat", {
@@ -44,7 +46,10 @@ const Index = () => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    message: content,
+                    messages: updatedMessages.map(msg => ({
+                        role: msg.role,
+                        content: msg.content
+                    })),
                     model: activeModelId,
                 }),
             });
