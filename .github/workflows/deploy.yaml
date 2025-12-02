@@ -3,8 +3,18 @@ name: CI/CD Pipeline - IsCoolGPT
 on:
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
 
 permissions:
   contents: read
