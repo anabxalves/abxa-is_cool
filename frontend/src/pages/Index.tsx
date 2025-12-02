@@ -16,10 +16,10 @@ interface Model {
 }
 
 const MODELS: Model[] = [
-	{ id: "gpt4o", name: "GPT-4o" },
-	{ id: "claude35", name: "Claude 3.5" },
-	{ id: "gemini", name: "Gemini Pro" },
-	{ id: "llama", name: "Llama 3.2" },
+	{ id: "gemini", name: "Gemini 2.5 (Flash)" },
+    { id: "openai", name: "GPT (OSS 20b)" },
+	{ id: "llama", name: "Llama 3.3 (70b Versatile)" },
+    { id: "moonshot", name: "Moonshot (Kimi K2)" },
 ];
 
 const Index = () => {
