@@ -1,13 +1,14 @@
-import os
-import time
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
 from google import genai
 from groq import Groq
-from dotenv import load_dotenv
+from pydantic import BaseModel
+from typing import List, Dict, Any
+import os
+import time
 
 load_dotenv()
 
@@ -38,23 +39,31 @@ gemini_client = genai.Client()
 groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 class ChatRequest(BaseModel):
-    message: str
-    model: str = "gpt-4o"
+    messages: List[Dict[str, str]]
+    model: str = "gemini"
 
 class ChatResponse(BaseModel):
     response: str
     model_used: str
 
-def call_gemini(message):
+def call_gemini(messages):
     if not gemini_client:
         raise Exception("API Key do Gemini não configurada")
 
+    gemini_history = []
+    for msg in messages:
+        role = "user" if msg["role"] == "user" else "model"
+        gemini_history.append({
+            "role": role,
+            "parts": [{"text": msg["content"]}]
+        })
+
     response = gemini_client.models.generate_content(
-        model="gemini-2.5-flash", contents=message
+        model="gemini-2.5-flash", contents=gemini_history
     )
     return response.text
 
-def call_groq(message, model):
+def call_groq(messages, model):
     if not groq_client:
         raise Exception("API Key do Groq nao configurada")
 
@@ -66,14 +75,24 @@ def call_groq(message, model):
         case "openai":
             model_name = "openai/gpt-oss-20b"
 
+    clean_messages = []
+    for msg in messages:
+        content_value = msg.get("content", "")
+
+        if isinstance(content_value, list) and len(content_value) > 0:
+            if isinstance(content_value[0], dict) and "text" in content_value[0]:
+                content_value = content_value[0]["text"]
+            else:
+                content_value = str(content_value)
+
+        clean_messages.append({
+            "role": msg["role"],
+            "content": str(content_value)
+        })
+
     response = groq_client.chat.completions.create(
         model=model_name,
-        messages=[
-            {
-                "role": "user",
-                "content": message,
-            }
-        ],
+        messages=clean_messages,
     )
 
     return response.choices[0].message.content
@@ -88,29 +107,31 @@ async def health_check():
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
+    last_user_message = request.messages[-1]["content"] if request.messages else ""
     try:
         if request.model == "gemini":
             try:
-                response_text = call_gemini(request.message)
+                response_text = call_gemini(request.messages)
             except Exception as e:
                 print(f"Erro no Gemini: {repr(e)}")
-                response_text = get_mock_response(request.message, "Gemini (Erro/Chave Inválida)")
+                response_text = get_mock_response(last_user_message, f"Gemini ({e})")
 
         elif request.model == "llama" or request.model == "moonshot" or request.model == "openai":
             try:
-                response_text = call_groq(request.message, request.model)
+                response_text = call_groq(request.messages, request.model)
             except Exception as e:
                 print(f"Erro no Groq: {repr(e)}")
-                response_text = get_mock_response(request.message, "Groq (Erro/Chave Inválida)")
+                response_text = get_mock_response(last_user_message, f"Groq/{request.model} ({e})")
 
         else:
-            response_text = get_mock_response(request.message, "[Modelo Desconhecido]")
+            response_text = get_mock_response(last_user_message, "[Modelo Desconhecido]")
 
         return ChatResponse(response=response_text, model_used=request.model)
 
     except Exception as e:
-        print(f"Erro geral: {e}")
-        return ChatResponse(response="Desculpe, ocorreu um erro interno no servidor.", model_used="error")
+        print(f"Erro geral: {str(e)}")
+
+    return ChatResponse(response="Desculpe, ocorreu um erro interno no servidor.", model_used="error")
 
 FRONTEND_STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 if os.path.isdir(FRONTEND_STATIC_DIR):
