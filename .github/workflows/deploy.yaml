@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
+      - 'images/**'
       - '.gitignore'
   push:
     branches: [ "main" ]
@@ -13,6 +14,7 @@ on:
       - 'README.md'
       - '**.md'
       - 'docs/**'
+      - 'images/**'
       - '.gitignore'
       - 'LICENSE'
 

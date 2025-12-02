@@ -1,11 +1,11 @@
 # ☁️ IsCoolGPT - Assistente de Estudos Inteligente Cloud Native
 
-> **Projeto Final:** Fundamentos de Computação em Nuvem (2025.2)
-> 
-> **Aluna:** Ana Beatriz Ximenes Alves
-> 
-> **Link (Load Balancer):** [Acesse aqui](http://iscoolgpt-alb-1020494150.us-east-2.elb.amazonaws.com)
+**Projeto AV2:** Fundamentos de Computação em Nuvem (2025.2)
 
+**Aluna:** Ana Beatriz Ximenes Alves
+
+**Link de acesso:** [IsCoolGPT - eu Hub Centralizado de IAs](http://iscoolgpt-alb-1020494150.us-east-2.elb.amazonaws.com)
+> **ATENÇÃO**: Caso o link de acesso não funcione como esperado, verifique o protocolo http associado. O correto é o `http`, tendo em vista que este projeto é puramente acadêmico, não armazena dados sensíveis e não .
 ---
 
 ## 📑 Sumário
@@ -32,10 +32,26 @@ O diferencial deste projeto não é apenas a aplicação em si, mas a **Infraest
 A solução foi arquitetada seguindo os princípios do *Twelve-Factor App*, utilizando contêineres para garantir portabilidade e serviços gerenciados da AWS para garantir disponibilidade.
 
 ### Diagrama de Infraestrutura
+A arquitetura do IsCoolGPT é desenhada para ser cloud-native e utilizar recursos serverless da AWS, maximizando a escalabilidade e a abordagem stateless. Dessa forma, o fluxo de dados do usuário até o backend, e o fluxo de CI/CD, são detalhados abaixo:
+- A arquitetura utiliza o Application Load Balancer (ALB) para ingressar o tráfego e distribuí-lo para o ECS Cluster. 
+- O serviço é executado no modo Fargate, que gerencia a execução de tarefas (Tasks). Cada Task executa um Container Docker Único que serve tanto o frontend estático (compilado via Node.js) quanto o backend (FastAPI/Python). 
+- As credenciais de API (GEMINI_API_KEY, GROQ_API_KEY) são injetadas de forma segura na Task Definition via variáveis de ambiente. 
+- O processo de automação (CI/CD) é gerenciado pelo GitHub Actions, que é responsável por construir a imagem, fazer o push para o ECR (Elastic Container Registry), e forçar o rolling update no ECS.
+
 > *O diagrama abaixo ilustra o fluxo da requisição desde o cliente até o processamento no ECS Fargate.*
 
-![Diagrama da Arquitetura AWS]([TO-DO])
-*(Fluxo: Usuário -> Internet Gateway -> Application Load Balancer -> ECS Cluster -> Fargate Task -> Container (FastAPI + React) -> APIs Externas)*
+![Diagrama da Arquitetura AWS](./images/diagrama-arquitetura.png)
+
+> #### Fluxo de Execução:
+> 1. O Usuário acessa a plataforma via Browser/Mobile. O tráfego passa, implicitamente, pelo Internet Gateway (necessário para acesso público).
+> 2. O tráfego é roteado para o Application Load Balancer (ALB) na Porta 80.
+> 3. O ALB distribui a requisição para o ECS Cluster.
+> 4. O ECS Fargate gerencia e executa uma Task.
+> 5. A Task executa o container Docker Único (Frontend + Backend FastAPI).
+> 6. O Backend (FastAPI) se comunica externamente com as APIs de IA (Google Gemini e Groq).
+> 
+> ![Diagrama da Arquitetura AWS](./images/infografo-aws.png)
+
 
 ### Componentes Chave:
 * **Frontend:** React + Vite + TailwindCSS (Interface otimizada e responsiva).
@@ -43,6 +59,44 @@ A solução foi arquitetada seguindo os princípios do *Twelve-Factor App*, util
 * **Container Registry (ECR):** Repositório privado e seguro para as imagens Docker versionadas.
 * **Orquestração (ECS Fargate):** Gerenciamento de containers *Serverless*, eliminando a necessidade de gerenciar instâncias EC2 manualmente.
 * **Traffic Management (ALB):** Application Load Balancer para distribuir tráfego e fornecer um ponto de entrada (DNS) fixo e estável.
+
+---
+## 📈Fluxo de Dados
+
+O IsCoolGPT adota uma arquitetura de backend totalmente *stateless* (sem estado), onde o histórico da conversa é gerenciado exclusivamente pelo cliente. Vejamos que isso é fundamental para a escalabilidade infinita em ambiente serverless.
+
+![Fluxo de Mensagem](./images/fluxo-de-mensagem.png)
+
+### Ciclo de Vida de uma Mensagem
+O ciclo de vida da mensagem, destacando a passagem do contexto, ocorre conforme os passos abaixo:
+1. Geração do Conteúdo e Contexto (Frontend):
+> O usuário digita uma mensagem (por exemplo, "Olá, explique nuvem") no Frontend, que é responsável por gerenciar o histórico da conversa.
+
+2. Preparação da Requisição: 
+> O Frontend empacota a nova mensagem do usuário junto com todo o histórico de mensagens anterior (o contexto), e essa requisição é enviada para o Backend (FastAPI).
+
+3. Entrada na AWS:
+> A requisição viaja pela rede, entrando pelo Application Load Balancer (ALB) público, que a encaminha para o Target Group do ECS Fargate.
+
+4. Processamento pelo Backend: 
+> Uma Task do Fargate, que executa o container Docker único com o Backend FastAPI, recebe a requisição, momento em que o Backend utiliza o Pydantic para estruturar os dados, recebendo a mensagem atual e o contexto completo.
+
+5. Inferência de IA:
+> O Backend utiliza o contexto recebido para formular uma requisição coerente para as IAs integradas, cujas chaves de API necessárias são injetadas de forma segura via variáveis de ambiente na Task Definition.
+
+6. Retorno da Resposta:
+> A API de IA externa retorna a resposta de inferência para o Backend FastAPI.
+
+7. Transmissão de Volta:
+> O Backend envia a resposta ao cliente (Frontend).
+
+8. Renderização (Frontend):
+> O Frontend recebe a resposta e a renderiza utilizando React Markdown, aplicando syntax highlighting para melhor visualização. Nesse momento, o Frontend atualiza seu estado, incorporando esta nova interação ao histórico que será enviado na próxima requisição.
+
+### 📈 Benefício da Arquitetura Stateless
+O principal benefício dessa abordagem é a escalabilidade infinita em ambiente serverless. Como o backend não precisa armazenar, recuperar ou manter o estado da sessão em memória ou em um banco de dados persistente, qualquer Task do Fargate pode processar qualquer requisição a qualquer momento. 
+
+Vejamos que isso elimina a necessidade de ***sticky sessions*** e permite que o Application Load Balancer distribua a carga de forma eficiente para um número ilimitado de tarefas, garantindo que o IsCoolGPT possa lidar com picos de tráfego de estudantes sem degradação de performance.
 
 ---
 
@@ -100,8 +154,8 @@ Para rodar o projeto na sua máquina para desenvolvimento ou testes.
 Crie um arquivo `.env` na raiz do projeto:
 ```env
 # Chaves de API (Obtenha no Google AI Studio e Groq Console)
-GEMINI_API_KEY="sua_chave_aqui"
-GROQ_API_KEY="sua_chave_aqui"
+GEMINI_API_KEY={sua_chave_aqui}
+GROQ_API_KEY={sua_chave_aqui}
 ```
 
 ### 2. Rodar com Docker (Recomendado)
@@ -124,20 +178,17 @@ O projeto conta com um pipeline robusto definido em `.github/workflows/deploy.ym
 ---
 
 ## 📸 Evidências de Funcionamento
-1. Aplicação com Memória (Contexto)
+1. Aplicação com Memória (Contexto) e Design Responsivo
 
-*Print mostrando uma conversa onde a IA lembra do que foi dito anteriormente.*
+![IsCoolGPT Desktop](./images/iscool-desktop.png)
+![IsCoolGPT Mobile](./images/iscool-mobile.png)
 
-![Chat com Contexto]([TO-DO])
+2. Pipeline DevOps (Github Actions)
 
-2. Pipeline DevOps (Sucesso)
-
-*Print do GitHub Actions.*
-
-![Pipeline]([TO-DO])
+![Deploy Pipeline](./images/ci_cd-git_actions.png)
 
 3. Infraestrutura AWS
 
-*Print do Console AWS (ECS/ALB).*
+Devido às práticas de privacidade do projeto, as capturas de tela do ambiente Amazon AWS são privadas. Sinta-se à vontade para solicitar acesso!
 
-![AWS Console]([TO-DO])
+> [Capturas de Tela AWS Console](https://drive.google.com/file/d/1iCja4sYXYw2EXMH0f1U1yfoUc5eLp1YP/view?usp=share_link)
