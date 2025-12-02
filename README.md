@@ -192,3 +192,37 @@ O projeto conta com um pipeline robusto definido em `.github/workflows/deploy.ym
 Devido às práticas de privacidade do projeto, as capturas de tela do ambiente Amazon AWS são privadas. Sinta-se à vontade para solicitar acesso!
 
 > [Capturas de Tela AWS Console](https://drive.google.com/file/d/1iCja4sYXYw2EXMH0f1U1yfoUc5eLp1YP/view?usp=share_link)
+
+---
+
+## 🔮 Próximos Passos e Roadmap de Evolução
+
+Este projeto representa um MVP (Minimum Viable Product) funcional e resiliente, porém, para transformá-lo em uma plataforma SaaS (Software as a Service) de larga escala, o seguinte roadmap técnico foi desenhado:
+
+### 1. Funcionalidades e Experiência do Usuário
+* [ ] **Persistência de Dados (Histórico):**
+    * **Problema:** Atualmente, o histórico vive na sessão do navegador (Stateless).
+    * **Solução:** Implementar **Amazon DynamoDB** (NoSQL) para armazenar logs de conversas, tendo em vista que o DynamoDB oferece baixa latência e integração nativa serverless, ideal para armazenar JSON de mensagens.
+* [ ] **Autenticação e Segurança:**
+    * **Problema:** Acesso aberto a qualquer pessoa com o link.
+    * **Solução:** Integrar **AWS Cognito** para gerenciar usuários (Sign-up/Sign-in) e proteger as rotas da API, garantindo que cada aluno acesse apenas seus próprios históricos.
+* [ ] **Upload de Documentos (RAG - Retrieval-Augmented Generation):**
+    * **Melhoria:** Permitir que o aluno faça upload de PDFs (ex: slides da aula) e a IA responda com base neles.
+    * **Tech:** Usar **LangChain** + **Vector Database** para indexar o conteúdo das aulas.
+
+### 2. Arquitetura para Alta Escalabilidade (Scale-Up)
+Caso o projeto cresça para milhares de alunos simultâneos, a arquitetura atual deve evoluir para:
+
+* [ ] **Cache Inteligente (Redis/ElastiCache):**
+    * Implementar uma camada de cache para armazenar respostas de perguntas frequentes (ex: "O que é S3?"), reduzindo custos com APIs de IA e latência para o usuário.
+* [ ] **Processamento Assíncrono (SQS + Lambda):**
+    * Para modelos de IA mais lentos ou processamento de arquivos pesados, substituir a chamada HTTP direta (síncrona) por uma arquitetura de eventos:
+    * *API Gateway -> SQS (Fila) -> Lambda (Processa IA) -> WebSocket (Notifica Frontend).*
+* [ ] **CDN (CloudFront):**
+    * Colocar o **Amazon CloudFront** na frente do Load Balancer para cachear os arquivos estáticos do React (JS/CSS) em borda (Edge Locations), reduzindo a carga no container e acelerando o carregamento global.
+
+### 3. FinOps e Observabilidade
+* [ ] **Rastreamento Distribuído (AWS X-Ray):**
+    * Implementar X-Ray para visualizar gargalos de performance entre o Backend e as APIs externas (Groq/Google).
+* [ ] **Alertas de Custo (AWS Budgets):**
+    * Configurar alarmes para evitar surpresas na fatura, especialmente se o Auto Scaling escalar o cluster excessivamente.
