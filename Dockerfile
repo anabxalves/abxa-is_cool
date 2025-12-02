@@ -10,7 +10,7 @@ COPY frontend/ .
 
 RUN npm run build
 
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -23,9 +23,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app
 
 COPY --from=build-frontend /app-frontend/dist ./app/static
-
-# RUN useradd -m myuser
-# USER myuser
 
 EXPOSE 80
 
