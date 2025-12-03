@@ -4,8 +4,8 @@
 
 **Aluna:** Ana Beatriz Ximenes Alves
 
-**Link de acesso:** [IsCoolGPT - eu Hub Centralizado de IAs](http://iscoolgpt-alb-1020494150.us-east-2.elb.amazonaws.com)
-> **ATENÇÃO**: Caso o link de acesso não funcione como esperado, verifique o protocolo http associado. O correto é o `http`, tendo em vista que este projeto é puramente acadêmico, não armazena dados sensíveis e não .
+**Link de acesso:** [IsCoolGPT - Seu Hub Centralizado de IAs](http://iscoolgpt-alb-1020494150.us-east-2.elb.amazonaws.com)
+> **ATENÇÃO**: Caso o link de acesso não funcione como esperado, verifique o protocolo http associado. O correto é o `http`, tendo em vista que este projeto é puramente acadêmico e não armazena dados sensíveis.
 ---
 
 ## 📑 Sumário
